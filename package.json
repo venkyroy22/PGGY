@@ -1,5 +1,5 @@
 {
-  "name": "pggy-temp",
+  "name": "pggy",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,7 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "jose": "^6.2.10",
     "next": "16.3.2",
+    "node-cron": "^4.6.0",
+    "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
@@ -17,6 +24,7 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
+    "prisma": "^7.9.1",
     "tailwindcss": "^4"
   }
 }

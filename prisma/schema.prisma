@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Owner {
+  id            String     @id @default(cuid())
+  name          String
+  phone         String     @unique
+  email         String?    @unique
+  passwordHash  String?    @map("password_hash")
+  role          String     @default("OWNER") // "OWNER" or "ADMIN"
+  status        String     @default("ACTIVE") // "ACTIVE" or "INACTIVE"
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  properties    Property[]
+
+  @@map("owners")
+}
+
+model Property {
+  id        String   @id @default(cuid())
+  ownerId   String   @map("owner_id")
+  name      String
+  address   String?
+  city      String?
+  status    String   @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  owner Owner  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  rooms Room[]
+  tenants Tenant[]
+
+  @@map("properties")
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  propertyId String   @map("property_id")
+  roomNumber String   @map("room_number")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  beds     Bed[]
+
+  @@unique([propertyId, roomNumber])
+  @@map("rooms")
+}
+
+model Bed {
+  id          String   @id @default(cuid())
+  roomId      String   @map("room_id")
+  bedNumber   String   @map("bed_number")
+  monthlyRent Float    @map("monthly_rent")
+  dailyRent   Float?   @map("daily_rent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  room    Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  tenant  Tenant?
+
+  @@unique([roomId, bedNumber])
+  @@map("beds")
+}
+
+model Tenant {
+  id            String    @id @default(cuid())
+  propertyId    String?   @map("property_id")
+  bedId         String?   @unique @map("bed_id")
+  name          String
+  phone         String
+  aadharNumber  String?   @map("aadhar_number")
+  address       String?
+  gender        String?
+  billingType   String    @default("MONTHLY") @map("billing_type")
+  agreedRent    Float?    @map("agreed_rent")
+  dueDay        Int?      @map("due_day")
+  depositAmount Float     @default(0) @map("deposit_amount")
+  moveInDate    DateTime  @map("move_in_date")
+  moveOutDate   DateTime? @map("move_out_date")
+  status        String    @default("active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  property    Property?   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bed         Bed?        @relation(fields: [bedId], references: [id], onDelete: SetNull)
+  rentCycles  RentCycle[]
+  messageLogs MessageLog[]
+
+  @@map("tenants")
+}
+
+model RentCycle {
+  id               String    @id @default(cuid())
+  tenantId         String    @map("tenant_id")
+  month            Int?
+  year             Int?
+  billingStartDate DateTime? @map("billing_start_date")
+  billingEndDate   DateTime? @map("billing_end_date")
+  amountDue  Float     @map("amount_due")
+  amountPaid Float     @default(0) @map("amount_paid")
+  status     String    @default("pending")
+  dueDate    DateTime  @map("due_date")
+  paidAt     DateTime? @map("paid_at")
+  note       String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messageLogs MessageLog[]
+  @@map("rent_cycles")
+}
+
+model MessageLog {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  rentCycleId  String   @map("rent_cycle_id")
+  messageType  String   @map("message_type")
+  sentAt       DateTime @default(now()) @map("sent_at")
+  status       String   @default("sent")
+  errorMessage String?  @map("error_message")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rentCycle RentCycle @relation(fields: [rentCycleId], references: [id], onDelete: Cascade)
+
+  @@map("message_logs")
+}
